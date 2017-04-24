@@ -179,7 +179,8 @@ func (a *DigestAuth) CheckAuth(r *http.Request) (username string, authinfo *stri
 		return "", nil
 	}
 
-	if client, ok := a.clients[auth["nonce"]]; !ok {
+	client, ok := a.clients[auth["nonce"]]
+	if !ok {
 		return "", nil
 	}
 
