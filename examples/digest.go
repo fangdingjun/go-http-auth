@@ -11,8 +11,8 @@
 package main
 
 import (
-	auth ".."
 	"fmt"
+	auth "github.com/fangdingjun/go-http-auth"
 	"net/http"
 )
 

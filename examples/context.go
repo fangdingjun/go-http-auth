@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"net/http"
 
-	auth ".."
+	auth "github.com/fangdingjun/go-http-auth"
 	"golang.org/x/net/context"
 )
 
