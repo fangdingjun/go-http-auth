@@ -187,13 +187,15 @@ func (a *DigestAuth) CheckAuth(r *http.Request) (username string, authinfo *stri
 	if client.nc != 0 && client.nc >= nc && !a.IgnoreNonceCount {
 		return "", nil
 	}
+
 	client.nc = nc
 	client.lastSeen = time.Now().UnixNano()
 
-	respHA2 := H(":" + auth["uri"])
-	rspauth := H(strings.Join([]string{HA1, auth["nonce"], auth["nc"], auth["cnonce"], auth["qop"], respHA2}, ":"))
+	//respHA2 := H(":" + auth["uri"])
+	//rspauth := H(strings.Join([]string{HA1, auth["nonce"], auth["nc"], auth["cnonce"], auth["qop"], respHA2}, ":"))
 
-	info := fmt.Sprintf(`qop="auth", rspauth="%s", cnonce="%s", nc="%s"`, rspauth, auth["cnonce"], auth["nc"])
+	info := fmt.Sprintf(`qop="auth", rspauth="%s", cnonce="%s", nc="%s"`,
+		string(auth["response"]), auth["cnonce"], auth["nc"])
 	return auth["username"], &info
 }
 
