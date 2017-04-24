@@ -47,6 +47,7 @@ var (
 	}
 )
 
+// BasicAuth basic auth struct
 type BasicAuth struct {
 	Realm   string
 	Secrets SecretProvider
@@ -58,13 +59,11 @@ type BasicAuth struct {
 // check that BasicAuth implements AuthenticatorInterface
 var _ = (AuthenticatorInterface)((*BasicAuth)(nil))
 
-/*
- Checks the username/password combination from the request. Returns
- either an empty string (authentication failed) or the name of the
- authenticated user.
-
- Supports MD5 and SHA1 password entries
-*/
+// CheckAuth Checks the username/password combination from the request. Returns
+// either an empty string (authentication failed) or the name of the
+// authenticated user.
+//
+// Supports MD5 and SHA1 password entries
 func (a *BasicAuth) CheckAuth(r *http.Request) string {
 	s := strings.SplitN(r.Header.Get(a.Headers.V().Authorization), " ", 2)
 	if len(s) != 2 || s[0] != "Basic" {
@@ -119,10 +118,8 @@ func compareMD5HashAndPassword(hashedPassword, password []byte) error {
 	return nil
 }
 
-/*
- http.Handler for BasicAuth which initiates the authentication process
- (or requires reauthentication).
-*/
+// RequireAuth is a http.Handler for BasicAuth which initiates the authentication process
+// (or requires reauthentication).
 func (a *BasicAuth) RequireAuth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(contentType, a.Headers.V().UnauthContentType)
 	w.Header().Set(a.Headers.V().Authenticate, `Basic realm="`+a.Realm+`"`)
@@ -130,13 +127,11 @@ func (a *BasicAuth) RequireAuth(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(a.Headers.V().UnauthResponse))
 }
 
-/*
- BasicAuthenticator returns a function, which wraps an
- AuthenticatedHandlerFunc converting it to http.HandlerFunc. This
- wrapper function checks the authentication and either sends back
- required authentication headers, or calls the wrapped function with
- authenticated username in the AuthenticatedRequest.
-*/
+// Wrap BasicAuthenticator returns a function, which wraps an
+// AuthenticatedHandlerFunc converting it to http.HandlerFunc. This
+// wrapper function checks the authentication and either sends back
+// required authentication headers, or calls the wrapped function with
+// authenticated username in the AuthenticatedRequest.
 func (a *BasicAuth) Wrap(wrapped AuthenticatedHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if username := a.CheckAuth(r); username == "" {
@@ -158,6 +153,7 @@ func (a *BasicAuth) NewContext(ctx context.Context, r *http.Request) context.Con
 	return context.WithValue(ctx, infoKey, info)
 }
 
+// NewBasicAuthenticator create a new basic authenticator
 func NewBasicAuthenticator(realm string, secrets SecretProvider) *BasicAuth {
 	return &BasicAuth{Realm: realm, Secrets: secrets}
 }

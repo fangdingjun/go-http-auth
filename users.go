@@ -6,18 +6,14 @@ import (
 	"sync"
 )
 
-/*
- SecretProvider is used by authenticators. Takes user name and realm
- as an argument, returns secret required for authentication (HA1 for
- digest authentication, properly encrypted password for basic).
-
- Returning an empty string means failing the authentication.
-*/
+// SecretProvider is used by authenticators. Takes user name and realm
+// as an argument, returns secret required for authentication (HA1 for
+// digest authentication, properly encrypted password for basic).
+//
+// Returning an empty string means failing the authentication.
 type SecretProvider func(user, realm string) string
 
-/*
- Common functions for file auto-reloading
-*/
+// File Common functions for file auto-reloading
 type File struct {
 	Path string
 	Info os.FileInfo
@@ -26,6 +22,7 @@ type File struct {
 	mu     sync.Mutex
 }
 
+// ReloadIfNeeded reload if needed
 func (f *File) ReloadIfNeeded() {
 	info, err := os.Stat(f.Path)
 	if err != nil {
@@ -39,27 +36,26 @@ func (f *File) ReloadIfNeeded() {
 	}
 }
 
-/*
- Structure used for htdigest file authentication. Users map realms to
- maps of users to their HA1 digests.
-*/
+// HtdigestFile Structure used for htdigest file authentication. Users map realms to
+// maps of users to their HA1 digests.
+//
 type HtdigestFile struct {
 	File
 	Users map[string]map[string]string
 	mu    sync.RWMutex
 }
 
-func reload_htdigest(hf *HtdigestFile) {
+func reloadHtdigest(hf *HtdigestFile) {
 	r, err := os.Open(hf.Path)
 	if err != nil {
 		panic(err)
 	}
-	csv_reader := csv.NewReader(r)
-	csv_reader.Comma = ':'
-	csv_reader.Comment = '#'
-	csv_reader.TrimLeadingSpace = true
+	csvReader := csv.NewReader(r)
+	csvReader.Comma = ':'
+	csvReader.Comment = '#'
+	csvReader.TrimLeadingSpace = true
 
-	records, err := csv_reader.ReadAll()
+	records, err := csvReader.ReadAll()
 	if err != nil {
 		panic(err)
 	}
@@ -76,14 +72,13 @@ func reload_htdigest(hf *HtdigestFile) {
 	}
 }
 
-/*
- SecretProvider implementation based on htdigest-formated files. Will
- reload htdigest file on changes. Will panic on syntax errors in
- htdigest files.
-*/
+// HtdigestFileProvider SecretProvider implementation based on htdigest-formated files. Will
+//reload htdigest file on changes. Will panic on syntax errors in
+//htdigest files.
+//
 func HtdigestFileProvider(filename string) SecretProvider {
 	hf := &HtdigestFile{File: File{Path: filename}}
-	hf.Reload = func() { reload_htdigest(hf) }
+	hf.Reload = func() { reloadHtdigest(hf) }
 	return func(user, realm string) string {
 		hf.ReloadIfNeeded()
 		hf.mu.RLock()
@@ -100,9 +95,8 @@ func HtdigestFileProvider(filename string) SecretProvider {
 	}
 }
 
-/*
- Structure used for htdigest file authentication. Users map users to
- their salted encrypted password
+/*HtpasswdFile Structure used for htdigest file authentication. Users map users to
+their salted encrypted password
 */
 type HtpasswdFile struct {
 	File
@@ -110,17 +104,17 @@ type HtpasswdFile struct {
 	mu    sync.RWMutex
 }
 
-func reload_htpasswd(h *HtpasswdFile) {
+func reloadHtpasswd(h *HtpasswdFile) {
 	r, err := os.Open(h.Path)
 	if err != nil {
 		panic(err)
 	}
-	csv_reader := csv.NewReader(r)
-	csv_reader.Comma = ':'
-	csv_reader.Comment = '#'
-	csv_reader.TrimLeadingSpace = true
+	csvReader := csv.NewReader(r)
+	csvReader.Comma = ':'
+	csvReader.Comment = '#'
+	csvReader.TrimLeadingSpace = true
 
-	records, err := csv_reader.ReadAll()
+	records, err := csvReader.ReadAll()
 	if err != nil {
 		panic(err)
 	}
@@ -133,14 +127,13 @@ func reload_htpasswd(h *HtpasswdFile) {
 	}
 }
 
-/*
- SecretProvider implementation based on htpasswd-formated files. Will
- reload htpasswd file on changes. Will panic on syntax errors in
- htpasswd files. Realm argument of the SecretProvider is ignored.
-*/
+// HtpasswdFileProvider SecretProvider implementation based on htpasswd-formated files. Will
+// reload htpasswd file on changes. Will panic on syntax errors in
+// htpasswd files. Realm argument of the SecretProvider is ignored.
+//
 func HtpasswdFileProvider(filename string) SecretProvider {
 	h := &HtpasswdFile{File: File{Path: filename}}
-	h.Reload = func() { reload_htpasswd(h) }
+	h.Reload = func() { reloadHtpasswd(h) }
 	return func(user, realm string) string {
 		h.ReloadIfNeeded()
 		h.mu.RLock()

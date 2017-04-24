@@ -7,9 +7,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-/*
- Request handlers must take AuthenticatedRequest instead of http.Request
-*/
+// AuthenticatedRequest Request handlers must take AuthenticatedRequest instead of http.Request
 type AuthenticatedRequest struct {
 	http.Request
 	/*
@@ -20,25 +18,21 @@ type AuthenticatedRequest struct {
 	Username string
 }
 
-/*
- AuthenticatedHandlerFunc is like http.HandlerFunc, but takes
- AuthenticatedRequest instead of http.Request
-*/
+// AuthenticatedHandlerFunc is like http.HandlerFunc, but takes
+// AuthenticatedRequest instead of http.Request
 type AuthenticatedHandlerFunc func(http.ResponseWriter, *AuthenticatedRequest)
 
-/*
- Authenticator wraps an AuthenticatedHandlerFunc with
- authentication-checking code.
-
- Typical Authenticator usage is something like:
-
-   authenticator := SomeAuthenticator(...)
-   http.HandleFunc("/", authenticator(my_handler))
-
- Authenticator wrapper checks the user authentication and calls the
- wrapped function only after authentication has succeeded. Otherwise,
- it returns a handler which initiates the authentication procedure.
-*/
+// Authenticator wraps an AuthenticatedHandlerFunc with
+// authentication-checking code.
+//
+// Typical Authenticator usage is something like:
+//
+//   authenticator := SomeAuthenticator(...)
+//   http.HandleFunc("/", authenticator(my_handler))
+//
+// Authenticator wrapper checks the user authentication and calls the
+// wrapped function only after authentication has succeeded. Otherwise,
+// it returns a handler which initiates the authentication procedure.
 type Authenticator func(AuthenticatedHandlerFunc) http.HandlerFunc
 
 // Info contains authentication information for the request.
@@ -73,8 +67,9 @@ func (i *Info) UpdateHeaders(headers http.Header) {
 
 type key int // used for context keys
 
-var infoKey key = 0
+var infoKey key
 
+// AuthenticatorInterface authenticator interface
 type AuthenticatorInterface interface {
 	// NewContext returns a new context carrying authentication
 	// information extracted from the request.
@@ -101,6 +96,7 @@ func FromContext(ctx context.Context) *Info {
 // successful).
 const AuthUsernameHeader = "X-Authenticated-Username"
 
+// JustCheck set username
 func JustCheck(auth AuthenticatorInterface, wrapped http.HandlerFunc) http.HandlerFunc {
 	return auth.Wrap(func(w http.ResponseWriter, ar *AuthenticatedRequest) {
 		ar.Header.Set(AuthUsernameHeader, ar.Username)
